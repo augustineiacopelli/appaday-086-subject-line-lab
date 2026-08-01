@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Subject Line Lab &middot; AppADay 086</title>
+<meta name="description" content="Paste an email body and get five subject-line options ranked by predicted open rate, measured by Claude.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#152238;
+    --ink-soft:#40506b;
+    --muted:#7688a2;
+    --paper:#e9edf4;
+    --paper-2:#dfe5ef;
+    --surface:#ffffff;
+    --line:#d3dbe7;
+    --teal:#0f766e;
+    --teal-bright:#14b8a6;
+    --indigo:#4f5bd5;
+    --amber:#f2a541;
+    --coral:#e2685f;
+    --shadow:0 1px 2px rgba(21,34,56,.06), 0 12px 30px -14px rgba(21,34,56,.24);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    background:
+      radial-gradient(120% 60% at 100% 0%, #eef2f8 0%, rgba(238,242,248,0) 60%),
+      linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+    color:var(--ink);
+    font-family:"Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  .wrap{
+    width:100%;
+    max-width:760px;
+    margin:0 auto;
+    padding:22px 18px 40px;
+    flex:1 1 auto;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+
+  /* ---------- header ---------- */
+  header.bar{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+  }
+  .brandcol{display:flex;flex-direction:column;gap:6px;min-width:0;}
+  .eyebrow{
+    font-family:"Space Grotesk", monospace;
+    font-weight:500;
+    font-size:.72rem;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--teal);
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--amber);}
+  .eyebrow:hover{color:var(--ink);}
+  h1{
+    margin:0;
+    font-family:"Fraunces", Georgia, serif;
+    font-weight:600;
+    font-size:clamp(1.7rem, 6.4vw, 2.5rem);
+    line-height:1.02;
+    letter-spacing:-.01em;
+  }
+  h1 em{font-style:italic;font-weight:500;color:var(--teal);}
+  .tagline{
+    margin:2px 0 0;
+    color:var(--ink-soft);
+    font-size:.94rem;
+    max-width:44ch;
+  }
+  .gear{
+    flex:0 0 auto;
+    width:42px;height:42px;
+    border:1px solid var(--line);
+    background:var(--surface);
+    border-radius:11px;
+    display:grid;place-items:center;
+    cursor:pointer;
+    color:var(--ink-soft);
+    box-shadow:var(--shadow);
+    transition:transform .15s ease, color .15s ease;
+  }
+  .gear:hover{color:var(--teal);transform:rotate(35deg);}
+  .gear svg{width:20px;height:20px;display:block;}
+
+  /* ---------- input panel ---------- */
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:18px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .field{display:flex;flex-direction:column;gap:7px;}
+  label.lab{
+    font-family:"Space Grotesk", monospace;
+    font-weight:500;
+    font-size:.74rem;
+    letter-spacing:.11em;
+    text-transform:uppercase;
+    color:var(--muted);
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+  }
+  label.lab .opt{
+    font-family:"Inter",sans-serif;
+    letter-spacing:normal;
+    text-transform:none;
+    font-size:.78rem;
+    color:var(--muted);
+    font-weight:400;
+  }
+  input[type=text], textarea{
+    width:100%;
+    font-family:"Inter", sans-serif;
+    font-size:1rem;
+    color:var(--ink);
+    background:#fbfcfe;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px 13px;
+    resize:vertical;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  textarea{min-height:150px;line-height:1.55;}
+  input[type=text]:focus, textarea:focus{
+    outline:none;
+    border-color:var(--teal-bright);
+    box-shadow:0 0 0 3px rgba(20,184,166,.16);
+  }
+  .rowbtns{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .charhint{
+    font-family:"Space Grotesk", monospace;
+    font-size:.76rem;
+    color:var(--muted);
+  }
+  .btn{
+    font-family:"Space Grotesk", monospace;
+    font-weight:700;
+    font-size:.92rem;
+    letter-spacing:.02em;
+    border-radius:10px;
+    padding:11px 18px;
+    border:1px solid transparent;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    transition:transform .12s ease, background .15s ease, box-shadow .15s ease;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-run{
+    background:linear-gradient(180deg, var(--teal-bright), var(--teal));
+    color:#fff;
+    box-shadow:0 10px 20px -10px rgba(15,118,110,.7);
+  }
+  .btn-run:hover{box-shadow:0 12px 26px -10px rgba(15,118,110,.85);}
+  .btn-run:disabled{opacity:.6;cursor:progress;box-shadow:none;}
+  .btn-ghost{
+    background:transparent;
+    color:var(--ink-soft);
+    border-color:var(--line);
+    font-weight:500;
+  }
+  .btn-ghost:hover{color:var(--teal);border-color:var(--teal-bright);}
+  .btn svg{width:16px;height:16px;}
+
+  /* ---------- notice ---------- */
+  .notice{
+    display:none;
+    border-radius:10px;
+    padding:11px 13px;
+    font-size:.9rem;
+    border:1px solid;
+  }
+  .notice.show{display:block;}
+  .notice.err{background:#fdf0ef;border-color:#f2c3bf;color:#a13a32;}
+  .notice.info{background:#eefaf8;border-color:#bfe8e2;color:#0b6157;}
+
+  /* ---------- results ---------- */
+  .results{display:flex;flex-direction:column;gap:14px;}
+  .results-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:10px;
+    padding:0 2px;
+  }
+  .results-head h2{
+    margin:0;
+    font-family:"Fraunces", Georgia, serif;
+    font-weight:600;
+    font-size:1.15rem;
+  }
+  .results-head .meta{
+    font-family:"Space Grotesk", monospace;
+    font-size:.74rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+
+  .empty{
+    border:1px dashed var(--line);
+    border-radius:var(--radius);
+    background:linear-gradient(180deg,#fbfcfe,#f4f7fb);
+    padding:30px 22px;
+    text-align:center;
+    color:var(--muted);
+  }
+  .empty .spec{
+    font-family:"Space Grotesk", monospace;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    font-size:.72rem;
+    color:var(--teal);
+    margin-bottom:8px;
+  }
+  .empty p{margin:0;font-size:.95rem;max-width:40ch;margin-inline:auto;}
+
+  .reading{
+    position:relative;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:15px 16px 15px 18px;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:4px 14px;
+    overflow:hidden;
+  }
+  .reading::before{
+    content:"";
+    position:absolute;
+    left:0;top:0;bottom:0;
+    width:4px;
+    background:var(--line);
+  }
+  .reading.strong::before{background:var(--teal);}
+  .reading.solid::before{background:var(--indigo);}
+  .reading.fair::before{background:var(--amber);}
+  .reading.top{border-color:#f0cd93;}
+  .reading.top::before{background:var(--amber);}
+
+  .rank{
+    grid-row:1 / span 3;
+    align-self:start;
+    font-family:"Space Grotesk", monospace;
+    font-weight:700;
+    font-size:1.25rem;
+    color:var(--muted);
+    width:30px;
+    text-align:center;
+    padding-top:1px;
+  }
+  .toptag{
+    display:inline-block;
+    font-family:"Space Grotesk", monospace;
+    font-weight:700;
+    font-size:.62rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:#8a5a06;
+    background:#fdf0d8;
+    border:1px solid #f0cd93;
+    border-radius:999px;
+    padding:2px 9px;
+    margin-bottom:6px;
+  }
+  .subject{
+    font-family:"Inter", sans-serif;
+    font-weight:600;
+    font-size:1.06rem;
+    line-height:1.3;
+    color:var(--ink);
+    word-break:break-word;
+  }
+  .metaline{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px;
+    margin-top:9px;
+  }
+  .chip{
+    font-family:"Space Grotesk", monospace;
+    font-weight:500;
+    font-size:.7rem;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:3px 10px;
+  }
+  .chars{
+    font-family:"Space Grotesk", monospace;
+    font-size:.72rem;
+    color:var(--muted);
+  }
+  .chars.over{color:var(--coral);}
+  .reason{
+    grid-column:2;
+    margin-top:8px;
+    color:var(--ink-soft);
+    font-size:.9rem;
+  }
+
+  .gauge{
+    grid-column:2;
+    margin-top:11px;
+    display:flex;
+    align-items:center;
+    gap:11px;
+  }
+  .track{
+    position:relative;
+    flex:1 1 auto;
+    height:9px;
+    background:var(--paper-2);
+    border-radius:999px;
+    overflow:hidden;
+  }
+  .track .ticks{
+    position:absolute;inset:0;
+    background-image:linear-gradient(90deg, rgba(255,255,255,.75) 1px, transparent 1px);
+    background-size:20% 100%;
+    opacity:.6;
+  }
+  .fill{
+    position:absolute;left:0;top:0;bottom:0;
+    width:0%;
+    border-radius:999px;
+    transition:width .9s cubic-bezier(.22,.61,.36,1);
+  }
+  .reading.strong .fill{background:linear-gradient(90deg,var(--teal-bright),var(--teal));}
+  .reading.solid .fill{background:linear-gradient(90deg,#6d78e0,var(--indigo));}
+  .reading.fair .fill{background:linear-gradient(90deg,#f4c06a,var(--amber));}
+  .score{
+    font-family:"Space Grotesk", monospace;
+    font-weight:700;
+    font-size:1.02rem;
+    color:var(--ink);
+    min-width:58px;
+    text-align:right;
+  }
+  .score small{
+    font-weight:500;
+    font-size:.66rem;
+    color:var(--muted);
+    letter-spacing:.05em;
+  }
+  .copy{
+    grid-column:2;
+    justify-self:start;
+    margin-top:12px;
+    font-family:"Space Grotesk", monospace;
+    font-weight:500;
+    font-size:.78rem;
+    color:var(--teal);
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:6px 12px;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .copy:hover{background:#effbf9;border-color:var(--teal-bright);}
+  .copy.done{color:#0b6157;border-color:#bfe8e2;background:#eefaf8;}
+  .copy svg{width:14px;height:14px;}
+
+  .disclaimer{
+    text-align:center;
+    color:var(--muted);
+    font-size:.8rem;
+    padding:2px 6px;
+    max-width:52ch;
+    margin:2px auto 0;
+  }
+
+  /* ---------- loading ---------- */
+  .loading{
+    display:none;
+    flex-direction:column;
+    gap:12px;
+  }
+  .loading.show{display:flex;}
+  .spec-card{
+    position:relative;
+    height:78px;
+    border-radius:var(--radius);
+    border:1px solid var(--line);
+    background:
+      linear-gradient(90deg, #f3f6fb 0%, #eaf0f7 40%, #f3f6fb 80%);
+    overflow:hidden;
+  }
+  .spec-card::after{
+    content:"";
+    position:absolute;top:0;bottom:0;left:-40%;width:40%;
+    background:linear-gradient(90deg, transparent, rgba(20,184,166,.16), transparent);
+    animation:scan 1.15s linear infinite;
+  }
+  @keyframes scan{to{left:120%;}}
+
+  /* ---------- modal ---------- */
+  .overlay{
+    position:fixed;inset:0;
+    background:rgba(21,34,56,.5);
+    backdrop-filter:blur(3px);
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+    padding:0;
+    z-index:50;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:var(--surface);
+    width:100%;
+    max-width:480px;
+    border-radius:18px 18px 0 0;
+    padding:20px 20px 26px;
+    box-shadow:0 -12px 40px rgba(21,34,56,.3);
+    animation:rise .22s ease;
+  }
+  @keyframes rise{from{transform:translateY(24px);opacity:.4;}to{transform:none;opacity:1;}}
+  .modal h3{
+    margin:0 0 4px;
+    font-family:"Fraunces", Georgia, serif;
+    font-weight:600;
+    font-size:1.3rem;
+  }
+  .modal p.sub{margin:0 0 16px;color:var(--muted);font-size:.88rem;}
+  .modal .field{margin-bottom:14px;}
+  .modal .readout{
+    font-family:"Space Grotesk", monospace;
+    font-size:.82rem;
+    color:var(--ink-soft);
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px 11px;
+  }
+  .modal .actions{display:flex;gap:10px;margin-top:6px;}
+  .modal .actions .btn{flex:1 1 auto;justify-content:center;}
+  .keyhint{font-size:.78rem;color:var(--muted);margin-top:-2px;}
+  .keyhint a{color:var(--teal);}
+
+  /* ---------- footer ---------- */
+  footer{
+    text-align:center;
+    padding:24px 18px 30px;
+    color:var(--muted);
+    font-size:.82rem;
+  }
+  footer a{color:var(--teal);text-decoration:none;font-weight:500;}
+  footer a:hover{text-decoration:underline;}
+  footer .sig{
+    font-family:"Space Grotesk", monospace;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    font-size:.68rem;
+    color:var(--muted);
+    margin-top:6px;
+  }
+
+  @media (min-width:560px){
+    .reading{padding-left:20px;}
+  }
+  @media (min-width:640px){
+    .overlay{align-items:center;padding:20px;}
+    .modal{border-radius:18px;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .fill{transition:none;}
+    .spec-card::after{animation:none;}
+    .modal{animation:none;}
+    .gear{transition:none;}
+    .gear:hover{transform:none;}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="bar">
+      <div class="brandcol">
+        <a class="eyebrow" href="https://augustineiacopelli.github.io/appaday/"><span class="dot"></span>AppADay &middot; No. 086</a>
+        <h1>Subject Line <em>Lab</em></h1>
+        <p class="tagline">Paste your email. Get five subject lines, each measured for predicted open rate.</p>
+      </div>
+      <button class="gear" id="gearBtn" aria-label="Settings" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+    </header>
+
+    <section class="panel">
+      <div class="field">
+        <label class="lab" for="audience">Audience or goal <span class="opt">optional &middot; who is this going to, and what should it achieve</span></label>
+        <input type="text" id="audience" placeholder="e.g., prospective students who applied but have not enrolled" autocomplete="off">
+      </div>
+      <div class="field">
+        <label class="lab" for="body">Email body</label>
+        <textarea id="body" placeholder="Paste the email you are sending. The subject lines will be drawn from what it actually says."></textarea>
+      </div>
+      <div id="notice" class="notice"></div>
+      <div class="rowbtns">
+        <button class="btn btn-ghost" id="exampleBtn" type="button">Try an example</button>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <span class="charhint" id="charhint">0 characters</span>
+          <button class="btn btn-run" id="runBtn" type="button">
+            Measure lines
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="results" id="resultsWrap">
+      <div class="results-head" id="resultsHead" style="display:none;">
+        <h2>Readings</h2>
+        <span class="meta" id="resultsMeta">5 candidates</span>
+      </div>
+
+      <div class="loading" id="loading">
+        <div class="spec-card"></div>
+        <div class="spec-card"></div>
+        <div class="spec-card"></div>
+      </div>
+
+      <div id="cards"></div>
+
+      <div class="empty" id="empty">
+        <div class="spec">Instrument idle</div>
+        <p>Paste an email and run the analysis to see five measured subject lines, ranked best first.</p>
+      </div>
+
+      <p class="disclaimer" id="disclaimer" style="display:none;">Scores are AI estimates of relative open likelihood based on subject-line craft, not guaranteed rates. Test what matters with your own audience.</p>
+    </section>
+  </div>
+
+  <footer>
+    <div>Built for <a href="https://augustineiacopelli.github.io/appaday/">AppADay</a> by Augustine Iacopelli.</div>
+    <div class="sig">No. 086 &middot; Productivity &middot; Powered by Claude</div>
+  </footer>
+
+  <!-- settings modal -->
+  <div class="overlay" id="overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Settings">
+      <h3>Settings</h3>
+      <p class="sub">Your key stays in this browser and is sent only to Anthropic when you run the lab.</p>
+      <div class="field">
+        <label class="lab" for="apiKey">Anthropic API key</label>
+        <input type="text" id="apiKey" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+        <div class="keyhint">Get a key at <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a>.</div>
+      </div>
+      <div class="field">
+        <label class="lab" for="sender">Sender or brand voice <span class="opt">optional</span></label>
+        <input type="text" id="sender" placeholder="e.g., WSU Office of Admissions" autocomplete="off">
+      </div>
+      <div class="field">
+        <label class="lab">Model</label>
+        <div class="readout" id="modelReadout">claude-sonnet-5</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost" id="clearKeyBtn" type="button">Clear key</button>
+        <button class="btn btn-run" id="saveBtn" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  var CLAUDE_MODEL = "claude-sonnet-5";
+  var API_URL = "https://api.anthropic.com/v1/messages";
+  var LS_KEY = "appaday086_key";
+  var LS_SENDER = "appaday086_sender";
+
+  function $(id){ return document.getElementById(id); }
+
+  function lsGet(k){ try{ return window.localStorage.getItem(k) || ""; }catch(e){ return ""; } }
+  function lsSet(k,v){ try{ window.localStorage.setItem(k,v); }catch(e){} }
+  function lsDel(k){ try{ window.localStorage.removeItem(k); }catch(e){} }
+
+  function showNotice(msg, kind){
+    var n = $("notice");
+    n.textContent = msg;
+    n.className = "notice show " + (kind || "info");
+  }
+  function hideNotice(){
+    var n = $("notice");
+    n.className = "notice";
+    n.textContent = "";
+  }
+
+  /* ---------- settings modal ---------- */
+  function openSettings(){
+    $("apiKey").value = lsGet(LS_KEY);
+    $("sender").value = lsGet(LS_SENDER);
+    $("modelReadout").textContent = CLAUDE_MODEL;
+    $("overlay").classList.add("show");
+  }
+  function closeSettings(){ $("overlay").classList.remove("show"); }
+
+  /* ---------- example ---------- */
+  var EXAMPLE = "Hi there,\n\nWe noticed you started an application to Wichita State this spring but have not finished enrolling. Good news: we have held your spot, and there is still time to lock in fall classes.\n\nMeet with an enrollment advisor this week and we will walk you through financial aid, transfer credits, and building your first schedule. Most students finish the whole process in under an hour.\n\nReply to this email or book a time and we will get you moving.\n\nGo Shockers,\nEnrollment Team";
+
+  /* ---------- char counter ---------- */
+  function updateChars(){
+    var len = $("body").value.length;
+    $("charhint").textContent = len + (len === 1 ? " character" : " characters");
+  }
+
+  /* ---------- prompt ---------- */
+  function buildPrompt(body, audience, sender){
+    var ctx = "";
+    if (sender && sender.trim()){ ctx += "Sender / brand voice: " + sender.trim() + "\n"; }
+    if (audience && audience.trim()){ ctx += "Intended audience or goal: " + audience.trim() + "\n"; }
+    if (ctx){ ctx = "Context:\n" + ctx + "\n"; }
+    return ctx +
+      "Email body:\n\"\"\"\n" + body.trim() + "\n\"\"\"\n\n" +
+      "Write exactly FIVE distinct subject line candidates for this email. Each must use a different angle " +
+      "(for example: curiosity, clear benefit, urgency, personal, direct/plain, or a question). " +
+      "For each candidate, estimate a score from 0 to 100 for how likely it is to be opened by the intended audience, " +
+      "and name the primary technique in one or two words, and give a one-line reason (max 14 words). " +
+      "Keep subject lines honest to the email, natural, and mostly under 60 characters. " +
+      "Sort the list from highest score to lowest.\n\n" +
+      "Return ONLY a JSON object, no markdown and no commentary, in exactly this shape:\n" +
+      "{\"lines\":[{\"subject\":\"...\",\"score\":0,\"technique\":\"...\",\"reason\":\"...\"}]}";
+  }
+
+  /* ---------- parse ---------- */
+  function extractJSON(text){
+    var t = (text || "").trim();
+    t = t.replace(/^```(?:json)?/i, "").replace(/```$/,"").trim();
+    var start = t.indexOf("{");
+    var end = t.lastIndexOf("}");
+    if (start > -1 && end > -1 && end > start){ t = t.slice(start, end + 1); }
+    return JSON.parse(t);
+  }
+
+  /* ---------- tier ---------- */
+  function tierClass(score){
+    if (score >= 80) return "strong";
+    if (score >= 65) return "solid";
+    return "fair";
+  }
+  function tierLabel(score){
+    if (score >= 80) return "Strong";
+    if (score >= 65) return "Solid";
+    return "Fair";
+  }
+
+  /* ---------- render ---------- */
+  function clearCards(){ $("cards").innerHTML = ""; }
+
+  function renderResults(lines){
+    clearCards();
+    var frag = document.createDocumentFragment();
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    lines.forEach(function(line, i){
+      var score = Math.max(0, Math.min(100, Math.round(Number(line.score) || 0)));
+      var subject = String(line.subject || "").trim();
+      var technique = String(line.technique || "").trim();
+      var reason = String(line.reason || "").trim();
+      var chars = subject.length;
+
+      var card = document.createElement("div");
+      card.className = "reading " + tierClass(score) + (i === 0 ? " top" : "");
+
+      var rank = document.createElement("div");
+      rank.className = "rank";
+      rank.textContent = (i + 1);
+      card.appendChild(rank);
+
+      var col = document.createElement("div");
+
+      if (i === 0){
+        var tag = document.createElement("div");
+        tag.className = "toptag";
+        tag.textContent = "Top pick";
+        col.appendChild(tag);
+      }
+
+      var subj = document.createElement("div");
+      subj.className = "subject";
+      subj.textContent = subject;
+      col.appendChild(subj);
+
+      var meta = document.createElement("div");
+      meta.className = "metaline";
+      if (technique){
+        var chip = document.createElement("span");
+        chip.className = "chip";
+        chip.textContent = technique;
+        meta.appendChild(chip);
+      }
+      var tierChip = document.createElement("span");
+      tierChip.className = "chip";
+      tierChip.textContent = tierLabel(score);
+      meta.appendChild(tierChip);
+      var cc = document.createElement("span");
+      cc.className = "chars" + (chars > 60 ? " over" : "");
+      cc.textContent = chars + " chars" + (chars > 60 ? " (long for mobile)" : "");
+      meta.appendChild(cc);
+      col.appendChild(meta);
+
+      card.appendChild(col);
+
+      if (reason){
+        var rz = document.createElement("div");
+        rz.className = "reason";
+        rz.textContent = reason;
+        card.appendChild(rz);
+      }
+
+      var gauge = document.createElement("div");
+      gauge.className = "gauge";
+      var track = document.createElement("div");
+      track.className = "track";
+      var ticks = document.createElement("div");
+      ticks.className = "ticks";
+      var fill = document.createElement("div");
+      fill.className = "fill";
+      track.appendChild(ticks);
+      track.appendChild(fill);
+      var sc = document.createElement("div");
+      sc.className = "score";
+      sc.innerHTML = score + " <small>/100</small>";
+      gauge.appendChild(track);
+      gauge.appendChild(sc);
+      card.appendChild(gauge);
+
+      var copyBtn = document.createElement("button");
+      copyBtn.className = "copy";
+      copyBtn.type = "button";
+      copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg><span>Copy</span>';
+      (function(subjectText, btn){
+        btn.addEventListener("click", function(){ copyText(subjectText, btn); });
+      })(subject, copyBtn);
+      card.appendChild(copyBtn);
+
+      frag.appendChild(card);
+
+      if (reduce){
+        fill.style.width = score + "%";
+      } else {
+        (function(f, s){ setTimeout(function(){ f.style.width = s + "%"; }, 60 + i * 90); })(fill, score);
+      }
+    });
+
+    $("cards").appendChild(frag);
+    $("resultsHead").style.display = "flex";
+    $("resultsMeta").textContent = lines.length + " candidates";
+    $("empty").style.display = "none";
+    $("disclaimer").style.display = "block";
+  }
+
+  /* ---------- copy ---------- */
+  function copyText(text, btn){
+    function done(){
+      btn.classList.add("done");
+      var span = btn.querySelector("span");
+      if (span) span.textContent = "Copied";
+      setTimeout(function(){
+        btn.classList.remove("done");
+        if (span) span.textContent = "Copy";
+      }, 1400);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done, function(){ fallbackCopy(text, done); });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+  function fallbackCopy(text, cb){
+    try{
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly","");
+      ta.style.position = "absolute";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      cb();
+    }catch(e){}
+  }
+
+  /* ---------- run ---------- */
+  var running = false;
+  function run(){
+    if (running) return;
+    hideNotice();
+    var body = $("body").value.trim();
+    var key = lsGet(LS_KEY);
+
+    if (!key){
+      showNotice("Add your Anthropic API key in Settings to run the lab.", "info");
+      openSettings();
+      return;
+    }
+    if (body.length < 15){
+      showNotice("Paste a bit more of the email body so the lab has something to work with.", "err");
+      return;
+    }
+
+    running = true;
+    var btn = $("runBtn");
+    btn.disabled = true;
+    $("loading").classList.add("show");
+    $("empty").style.display = "none";
+    $("resultsHead").style.display = "none";
+    $("disclaimer").style.display = "none";
+    clearCards();
+
+    var prompt = buildPrompt(body, $("audience").value, lsGet(LS_SENDER));
+
+    fetch(API_URL, {
+      method:"POST",
+      headers:{
+        "content-type":"application/json",
+        "x-api-key":key,
+        "anthropic-version":"2023-06-01",
+        "anthropic-dangerous-direct-browser-access":"true"
+      },
+      body:JSON.stringify({
+        model:CLAUDE_MODEL,
+        max_tokens:4096,
+        system:"You are Subject Line Lab, an expert email copywriter and deliverability analyst. You write honest, high-performing subject lines and estimate their open likelihood. You always answer with only the requested JSON.",
+        messages:[{ role:"user", content:prompt }]
+      })
+    })
+    .then(function(res){
+      return res.json().then(function(data){ return { ok:res.ok, status:res.status, data:data }; });
+    })
+    .then(function(r){
+      if (!r.ok){
+        var msg = (r.data && r.data.error && r.data.error.message) ? r.data.error.message : ("Request failed (" + r.status + ").");
+        throw new Error(msg);
+      }
+      var text = "";
+      if (r.data && Array.isArray(r.data.content)){
+        text = r.data.content.filter(function(b){ return b.type === "text"; }).map(function(b){ return b.text; }).join("\n");
+      }
+      var parsed = extractJSON(text);
+      var lines = (parsed && Array.isArray(parsed.lines)) ? parsed.lines : [];
+      lines = lines.filter(function(l){ return l && l.subject; }).slice(0, 5);
+      if (!lines.length) throw new Error("EMPTY");
+      renderResults(lines);
+    })
+    .catch(function(err){
+      $("empty").style.display = "block";
+      if (err && err.message === "EMPTY"){
+        showNotice("The lab could not read a clean result. Try running it again.", "err");
+      } else {
+        showNotice((err && err.message) ? err.message : "Something went wrong. Try again.", "err");
+      }
+    })
+    .then(function(){
+      running = false;
+      btn.disabled = false;
+      $("loading").classList.remove("show");
+    });
+  }
+
+  /* ---------- wire up ---------- */
+  window.addEventListener("load", function(){
+    $("gearBtn").addEventListener("click", openSettings);
+    $("overlay").addEventListener("click", function(e){ if (e.target === $("overlay")) closeSettings(); });
+    $("saveBtn").addEventListener("click", function(){
+      var k = $("apiKey").value.trim();
+      var s = $("sender").value.trim();
+      if (k) lsSet(LS_KEY, k); else lsDel(LS_KEY);
+      if (s) lsSet(LS_SENDER, s); else lsDel(LS_SENDER);
+      closeSettings();
+      showNotice("Settings saved.", "info");
+      setTimeout(hideNotice, 1600);
+    });
+    $("clearKeyBtn").addEventListener("click", function(){
+      lsDel(LS_KEY);
+      $("apiKey").value = "";
+    });
+    $("exampleBtn").addEventListener("click", function(){
+      $("body").value = EXAMPLE;
+      $("audience").value = "prospective students who applied but have not enrolled";
+      updateChars();
+      hideNotice();
+    });
+    $("runBtn").addEventListener("click", run);
+    $("body").addEventListener("input", updateChars);
+    document.addEventListener("keydown", function(e){
+      if (e.key === "Escape") closeSettings();
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") run();
+    });
+    updateChars();
+  });
+</script>
+</body>
+</html>
