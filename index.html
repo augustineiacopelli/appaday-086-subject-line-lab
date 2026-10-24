@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="manifest" href="https://augustineiacopelli.github.io/appaday/manifests/086.webmanifest">
 <script src="https://augustineiacopelli.github.io/appaday/save.js" defer></script>
+<script src="https://augustineiacopelli.github.io/appaday/keys.js" data-app="086" data-legacy-key="appaday086_key" data-accent="#C8401A" defer></script>
 <title>Subject Line Lab | AppADay 086</title>
 <meta name="description" content="Paste an email body and get five subject-line options ranked by predicted open rate, measured by Claude.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -590,11 +591,7 @@
     <div class="modal" role="dialog" aria-modal="true" aria-label="Settings">
       <h3>Settings</h3>
       <p class="sub">Your key stays in this browser and is sent only to Anthropic when you run the lab.</p>
-      <div class="field">
-        <label class="lab" for="apiKey">Anthropic API key</label>
-        <input type="text" id="apiKey" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
-        <div class="keyhint">Get a key at <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a>.</div>
-      </div>
+      <div class="field" id="keyMount"><div class="keyhint">The key manager is loading. If this stays, check your connection and reload.</div></div>
       <div class="field">
         <label class="lab" for="sender">Sender or brand voice <span class="opt">optional</span></label>
         <input type="text" id="sender" placeholder="e.g., WSU Office of Admissions" autocomplete="off">
@@ -604,7 +601,6 @@
         <div class="readout" id="modelReadout">claude-sonnet-5</div>
       </div>
       <div class="actions">
-        <button class="btn btn-ghost" id="clearKeyBtn" type="button">Clear key</button>
         <button class="btn btn-run" id="saveBtn" type="button">Save</button>
       </div>
     </div>
@@ -613,7 +609,6 @@
 <script>
   var CLAUDE_MODEL = "claude-sonnet-5";
   var API_URL = "https://api.anthropic.com/v1/messages";
-  var LS_KEY = "appaday086_key";
   var LS_SENDER = "appaday086_sender";
 
   function $(id){ return document.getElementById(id); }
@@ -635,7 +630,7 @@
 
   /* ---------- settings modal ---------- */
   function openSettings(){
-    $("apiKey").value = lsGet(LS_KEY);
+    if (window.AppKeys) window.AppKeys.mountSettings($("keyMount"));
     $("sender").value = lsGet(LS_SENDER);
     $("modelReadout").textContent = CLAUDE_MODEL;
     $("overlay").classList.add("show");
@@ -831,21 +826,24 @@
 
   /* ---------- run ---------- */
   var running = false;
-  function run(){
+  async function run(){
     if (running) return;
     hideNotice();
     var body = $("body").value.trim();
-    var key = lsGet(LS_KEY);
-
-    if (!key){
-      showNotice("Add your Anthropic API key in Settings to run the lab.", "info");
-      openSettings();
-      return;
-    }
     if (body.length < 15){
       showNotice("Paste a bit more of the email body so the lab has something to work with.", "err");
       return;
     }
+    if (!window.AppKeys){
+      showNotice("The key manager did not load. Check your connection and reload.", "err");
+      return;
+    }
+    var key = await window.AppKeys.get();
+    if (!key){
+      showNotice("Add your Claude API key with the gear button to run the lab.", "info");
+      return;
+    }
+    if (running) return;
 
     running = true;
     var btn = $("runBtn");
@@ -911,17 +909,11 @@
     $("gearBtn").addEventListener("click", openSettings);
     $("overlay").addEventListener("click", function(e){ if (e.target === $("overlay")) closeSettings(); });
     $("saveBtn").addEventListener("click", function(){
-      var k = $("apiKey").value.trim();
       var s = $("sender").value.trim();
-      if (k) lsSet(LS_KEY, k); else lsDel(LS_KEY);
       if (s) lsSet(LS_SENDER, s); else lsDel(LS_SENDER);
       closeSettings();
       showNotice("Settings saved.", "info");
       setTimeout(hideNotice, 1600);
-    });
-    $("clearKeyBtn").addEventListener("click", function(){
-      lsDel(LS_KEY);
-      $("apiKey").value = "";
     });
     $("exampleBtn").addEventListener("click", function(){
       $("body").value = EXAMPLE;
