@@ -21,7 +21,7 @@ The strongest candidate is marked as the top pick. An optional audience field an
 
 A single self-contained `index.html` of vanilla HTML, CSS, and JavaScript. No build step and no dependencies beyond Google Fonts (Fraunces, Space Grotesk, Inter). The interface is a measurement instrument: a clinical cool palette, a serif wordmark used with restraint, and instrument-style numerals on every score and gauge.
 
-It is AI-powered. The app calls the Anthropic Messages API directly from the browser using your own API key, which is stored only in your browser's local storage and sent only to Anthropic when you run the lab. Add your key in Settings (the gear icon). The model is `claude-sonnet-5`.
+It is AI-powered. The app calls the Anthropic Messages API directly from the browser using your own API key, which is stored only in your browser's local storage and sent only to Anthropic when you run the lab. Add your key in Settings (the gear icon). The model is the current Claude Sonnet model.
 
 Scores are AI estimates of relative open likelihood based on subject-line craft, not guaranteed rates. Use them to compare candidates and pick a direction, then test what matters with your own audience.
 

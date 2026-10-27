@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="manifest" href="https://augustineiacopelli.github.io/appaday/manifests/086.webmanifest">
 <script src="https://augustineiacopelli.github.io/appaday/save.js" defer></script>
+<script src="https://augustineiacopelli.github.io/appaday/models.js"></script>
 <script src="https://augustineiacopelli.github.io/appaday/keys.js" data-app="086" data-legacy-key="appaday086_key" data-accent="#C8401A" defer></script>
 <title>Subject Line Lab | AppADay 086</title>
 <meta name="description" content="Paste an email body and get five subject-line options ranked by predicted open rate, measured by Claude.">
@@ -598,7 +599,7 @@
       </div>
       <div class="field">
         <label class="lab">Model</label>
-        <div class="readout" id="modelReadout">claude-sonnet-5</div>
+        <div class="readout" id="modelReadout" data-model-id="sonnet"></div>
       </div>
       <div class="actions">
         <button class="btn btn-run" id="saveBtn" type="button">Save</button>
@@ -607,7 +608,7 @@
   </div>
 
 <script>
-  var CLAUDE_MODEL = "claude-sonnet-5";
+  var CLAUDE_MODEL = (window.AppModels ? window.AppModels.id("sonnet") : "");
   var API_URL = "https://api.anthropic.com/v1/messages";
   var LS_SENDER = "appaday086_sender";
 
@@ -930,15 +931,6 @@
     updateChars();
   });
 
-async function getModel(tier = 'sonnet') {
-  try {
-    const response = await fetch('../config.json');
-    const config = await response.json();
-    return config.models[tier];
-  } catch {
-    return 'claude-sonnet-5-5';
-  }
-}
 </script>
 </body>
 </html>
